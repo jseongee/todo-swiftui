@@ -25,53 +25,81 @@ struct ContentView: View {
     }()
 
     var body: some View {
-        VStack {
+        VStack(spacing: 16) {
             HStack {
                 TextField("할 일을 입력해주세요.", text: $newTodo)
-                    .textFieldStyle(.roundedBorder)
-                Button("추가") {
-                    addTodo()
+                    .padding(10)
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(10)
+
+                Button(action: addTodo) {
+                    Image(systemName: "plus")
+                        .foregroundColor(.white)
+                        .padding(10)
+                        .background(Color.accentColor)
+                        .clipShape(Circle())
                 }
-                .buttonStyle(.borderedProminent)
             }
+            .padding(.horizontal)
 
-            List {
-                ForEach($todos) { $todo in
-                    Toggle(isOn: $todo.isDone) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(todo.content)
-                                .strikethrough(todo.isDone)
-                                .foregroundColor(todo.isDone ? .gray : .primary)
+            if todos.isEmpty {
+                Spacer()
+                Text("할 일이 없습니다.")
+                    .foregroundColor(.secondary)
+                Spacer()
+            } else {
+                List {
+                    ForEach($todos) { $todo in
+                        HStack {
+                            Button(action: {
+                                withAnimation {
+                                    todo.isDone.toggle()
+                                    saveTodos()
+                                }
+                            }) {
+                                Image(systemName: todo.isDone ? "checkmark.circle.fill" : "circle")
+                                    .foregroundColor(todo.isDone ? .green : .gray)
+                            }
 
-                            Text(dateFormatter.string(from: todo.createdAt))
-                                .font(.caption)
-                                .foregroundColor(.gray)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(todo.content)
+                                    .strikethrough(todo.isDone)
+                                    .foregroundColor(.primary)
+
+                                Text(dateFormatter.string(from: todo.createdAt))
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
                         }
+                        .padding(.vertical, 6)
                     }
-                    .onChange(of: todo.isDone) {
-                        saveTodos()
-                    }
-
+                    .onDelete(perform: deleteTodo)
                 }
-                .onDelete(perform: deleteTodo)
+                .listStyle(.plain)
             }
 
             Spacer()
         }
-        .padding()
+        .padding(.top)
+        .background(Color(.systemGroupedBackground))
+        .ignoresSafeArea(edges: .bottom)
     }
 
     private func addTodo() {
         let trimmed = newTodo.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
-        todos.append(TodoItem(content: trimmed))
+        withAnimation {
+            todos.append(TodoItem(content: trimmed))
+        }
         newTodo = ""
         saveTodos()
     }
 
     private func deleteTodo(at offsets: IndexSet) {
-        todos.remove(atOffsets: offsets)
+        withAnimation {
+            todos.remove(atOffsets: offsets)
+        }
         saveTodos()
     }
 
@@ -81,11 +109,11 @@ struct ContentView: View {
 }
 
 extension UserDefaults {
-	private static let todosKey = "todos"
+    private static let todosKey = "todos"
 
     func loadTodos() -> [TodoItem] {
         if let data = data(forKey: Self.todosKey),
-              let decoded = try? JSONDecoder().decode([TodoItem].self, from: data) {
+           let decoded = try? JSONDecoder().decode([TodoItem].self, from: data) {
             return decoded
         }
 
