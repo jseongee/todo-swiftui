@@ -20,17 +20,21 @@ struct ContentView: View {
                 TextField("할 일을 입력해주세요.", text: $newTodo)
                     .textFieldStyle(.roundedBorder)
                 Button("추가") {
-                    addButtonTapped()
+                    addTodo()
                 }
                 .buttonStyle(.borderedProminent)
             }
 
-            List($todos) { $todo in
-                Toggle(isOn: $todo.isDone) {
-                    Text(todo.content)
-                        .strikethrough(todo.isDone)
-                        .foregroundColor(todo.isDone ? .gray : .primary)
+            List {
+                ForEach($todos) { $todo in
+                    Toggle(isOn: $todo.isDone) {
+                        Text(todo.content)
+                            .strikethrough(todo.isDone)
+                            .foregroundColor(todo.isDone ? .gray : .primary)
+                    }
+
                 }
+                .onDelete(perform: deleteTodo)
             }
 
             Spacer()
@@ -38,12 +42,16 @@ struct ContentView: View {
         .padding()
     }
 
-    private func addButtonTapped() {
+    private func addTodo() {
         let trimmed = newTodo.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
         todos.append(TodoItem(content: trimmed))
         newTodo = ""
+    }
+
+    private func deleteTodo(at offsets: IndexSet) {
+        todos.remove(atOffsets: offsets)
     }
 }
 
