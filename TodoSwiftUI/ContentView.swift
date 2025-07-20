@@ -3,11 +3,13 @@ import SwiftUI
 struct TodoItem: Identifiable, Codable {
     let id: UUID
     let content: String
+    let createdAt: Date
     var isDone: Bool
 
-    init(id: UUID = UUID(), content: String, isDone: Bool = false) {
+    init(id: UUID = UUID(), content: String, createdAt: Date = Date(), isDone: Bool = false) {
         self.id = id
         self.content = content
+        self.createdAt = createdAt
         self.isDone = isDone
     }
 }
@@ -15,6 +17,12 @@ struct TodoItem: Identifiable, Codable {
 struct ContentView: View {
     @State private var todos: [TodoItem] = UserDefaults.standard.loadTodos()
     @State private var newTodo: String = ""
+
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy.MM.dd HH:mm"
+        return formatter
+    }()
 
     var body: some View {
         VStack {
@@ -30,9 +38,15 @@ struct ContentView: View {
             List {
                 ForEach($todos) { $todo in
                     Toggle(isOn: $todo.isDone) {
-                        Text(todo.content)
-                            .strikethrough(todo.isDone)
-                            .foregroundColor(todo.isDone ? .gray : .primary)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(todo.content)
+                                .strikethrough(todo.isDone)
+                                .foregroundColor(todo.isDone ? .gray : .primary)
+
+                            Text(dateFormatter.string(from: todo.createdAt))
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                        }
                     }
                     .onChange(of: todo.isDone) {
                         saveTodos()
